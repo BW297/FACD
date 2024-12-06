@@ -214,7 +214,6 @@ class FACD(nn.Module):
         t_score = self.t_attn(concat_feature_2)
         score = F.softmax(torch.cat([g_score, t_score], dim=1), dim=1)
         output = final_x + score[:, 0].unsqueeze(1) * g_feature + score[:, 1].unsqueeze(1) * t_feature
-        output = final_x + g_feature
         
         return self.decoder.forward(output, student_id, exercise_id, knowledge_point)
     
