@@ -28,7 +28,7 @@ Firstly, you need
 
 > cd scripts
 
-Then, create a ***<u>"ckpt"</u>*** directory in ***<u>"mdoel"</u>*** directory and you can run our framework in different dataset with random selection strategy using following command:
+Then, create a ***<u>"ckpt"</u>*** directory in ***<u>"model"</u>*** directory and you can run our framework in different dataset with random selection strategy using following command:
 
 ```shell
 bash run.sh
