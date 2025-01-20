@@ -1,4 +1,4 @@
-# FACD</u>-IJCAI 2025
+# FACD
 
 We provide comprehensive instructions on how to run FACD in the ***<u>"scripts"</u>*** directory. 
 
