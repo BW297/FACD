@@ -5,29 +5,30 @@ The implementation for the IJCAI-25 paper "A Fast-Adaptive Cognitive Diagnosis F
 # 💻 Requirements	
 
 ```python
-dgl==2.1.0+cu121
-numpy==2.1.2
+numpy==2.2.5
 pandas==2.2.3
-scikit_learn==1.4.1.post1
-scipy==1.14.1
-torch==2.2.1+cu121
-torch_geometric==2.6.1
-torch_sparse==0.6.18+pt22cu121
-tqdm==4.65.0
-vegas==6.0.1
+scikit_learn==1.6.1
+scipy==1.15.2
+torch==2.4.0
+tqdm==4.66.5
+vegas==6.1.3
 ```
 Please install all the dependencies listed in the `requirements.txt` file by running the following command:
 
-```bash
+```shell
 pip install -r requirements.txt
 ```
 
 # 🛠️ Experiments
 
-You can run our framework in provided dataset with BECAT selection strategy using following command:
+Firstly, you need
 
-```shell
-bash scripts/run.sh
+> cd scripts
+
+Then, you can run our framework in provided dataset with BECAT selection strategy using following command:
+
+```bash
+bash run.sh
 ```
 
 If you want to change the CAT selection strategy, just replace the parameter of `--strategy` with the name of your target strategy, such as random, MAAT, NCAT.

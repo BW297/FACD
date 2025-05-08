@@ -1,8 +1,5 @@
 from collections import defaultdict, deque
 import torch
-import dgl
-from torch_geometric.data import Data
-import random
 import numpy as np
 import scipy.sparse as sp
 
@@ -34,10 +31,13 @@ class AdapTestDataset(Dataset):
         # initialize tested and untested set
         self.candidate = None
         self.graph = None
-        self.local_map = None
         self.meta = None
         self._tested = None
         self._untested = None
+        self.se = None
+        self.ek = None
+        self.sek_num = self.n_students + self.n_questions + self.n_concepts
+        self.se_num = self.n_students + self.n_questions
         self.reset()
 
     def apply_selection(self, student_idx, question_idx):
@@ -52,8 +52,6 @@ class AdapTestDataset(Dataset):
         self._untested[student_idx].remove(question_idx)
         self._tested[student_idx].append(question_idx)
         self.se[student_idx, question_idx] = 1
-        self.local_map_new_edge.append((int(student_idx + self.n_questions - 1), int(question_idx)))
-        self.inverse_local_map_new_edge.append((int(question_idx), int(student_idx + self.n_questions - 1), ))
     
     def graph_update(self):    
         tmp = np.zeros(shape=(self.sek_num, self.sek_num))
@@ -68,38 +66,15 @@ class AdapTestDataset(Dataset):
         d_mat_inv = sp.diags(d_inv)
         norm_adj_tmp = d_mat_inv.dot(graph)
         adj_matrix = norm_adj_tmp.dot(d_mat_inv)
-        self.grpah = self.sp_mat_to_sp_tensor(adj_matrix)
-
-    def local_map_update(self):
-        self.local_map['s_from_e'] = dgl.DGLGraph()
-        self.local_map['e_from_s'] = dgl.DGLGraph()
-        src, dst = tuple(zip(*self.local_map_new_edge))
-        self.local_map['s_from_e'].add_edges(src, dst)   
-        src, dst = tuple(zip(*self.inverse_local_map_new_edge))
-        self.local_map['e_from_s'].add_edges(src, dst)
-        self.local_map_new_edge = []
-        self.inverse_local_map_new_edge = []
+        self.graph = self.sp_mat_to_sp_tensor(adj_matrix)
 
     def reset(self):
         """ 
         Set tested set empty
         """
-        self.final_graph()
-        self.local_map_new_edge = []
-        self.inverse_local_map_new_edge = []
-        self.local_map = {
-            'k_from_e': self.build_graph4ke(from_e=True),
-            'e_from_k': self.build_graph4ke(from_e=False),
-            'e_from_s': self.build_graph4se(from_s=True),
-            's_from_e': self.build_graph4se(from_s=False),
-        }
         self.candidate = dict()
-        # self.meta = dict()
         for sid in self.data:
-            random.seed(0)
             self.candidate[sid] = self.data[sid].keys()
-            # self.candidate[sid] = random.sample(self.data[sid].keys(), int(len(self.data[sid]) * 0.8))
-            # self.meta[sid] = [log for log in self.data[sid].keys() if log not in self.candidate[sid]]
         self._tested = defaultdict(deque)
         self._untested = defaultdict(set)
         for sid in self.data:
@@ -157,64 +132,18 @@ class AdapTestDataset(Dataset):
                 triplets[sid][qid] = self.data[sid][qid]
         return triplets
     
-    def build_graph4se(self, from_s: bool):
-        stu_num = self.n_students
-        exer_num = self.n_questions
-        node = stu_num + exer_num
-        g = dgl.DGLGraph()
-        g.add_nodes(node)
-        edge_list = []
-        cnt = {}
-        for stu in range(self.num_students):
-            cnt[stu] = 0
-
-        for _, (stu_id, exer_id, label) in enumerate(self._raw_data):
-            if cnt[stu] > 30:
-                continue
-            cnt[stu] += 1
-            if from_s:
-                edge_list.append((int(stu_id + exer_num - 1), int(exer_id)))
-            else:
-                edge_list.append((int(exer_id), int(stu_id + exer_num - 1)))
-        src, dst = tuple(zip(*edge_list))
-        g.add_edges(src, dst)
-        return g
-    
-    def build_graph4ke(self, from_e: bool):
-        know_num = self.n_concepts
-        exer_num = self.n_questions
-        node = exer_num + know_num
-        g = dgl.DGLGraph()
-        g.add_nodes(node)
-        edge_list = []
-        if from_e:
-            for exer_id in self._concept_map:
-                for know_id in self._concept_map[exer_id]:
-                    edge_list.append((int(exer_id), int(know_id + exer_num - 1)))
-        else:
-            for exer_id in self._concept_map:
-                for know_id in self._concept_map[exer_id]:
-                    edge_list.append((int(know_id + exer_num - 1), int(exer_id)))
-
-        src, dst = tuple(zip(*edge_list))
-        g.add_edges(src, dst)
-        return g
-    
     def sp_mat_to_sp_tensor(self, sp_mat):
         coo = sp_mat.tocoo().astype(np.float64)
         indices = torch.from_numpy(np.asarray([coo.row, coo.col]))
         return torch.sparse_coo_tensor(indices, coo.data, coo.shape, dtype=torch.float64).coalesce()
     
     def final_graph(self):
-        self.sek_num = self.n_students + self.n_questions + self.n_concepts
-        self.se_num = self.n_students + self.n_questions
         tmp = np.zeros(shape=(self.sek_num, self.sek_num))
         self.se = np.zeros(shape=(self.n_students, self.n_questions))
         self.ek = np.zeros(shape=(self.n_questions, self.n_concepts))
         for _, (stu_id, exer_id, label) in enumerate(self._raw_data):
             stu_id, exer_id = int(stu_id), int(exer_id)
             self.se[stu_id, exer_id] = 1
-
         for exer_id in self._concept_map:
             for know_id in self._concept_map[exer_id]:
                 self.ek[exer_id, know_id] = 1

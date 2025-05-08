@@ -3,7 +3,6 @@ import numpy as np
 from strategy.abstract_strategy import AbstractStrategy
 from model.abstract_model import AbstractModel
 from dataset.adaptest_dataset import AdapTestDataset
-import random
 from tqdm import tqdm
 
 class BECATstrategy(AbstractStrategy):

@@ -6,7 +6,6 @@ from tqdm import tqdm
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as data
-from torch_sparse import SparseTensor
 from model.abstract_model import AbstractModel
 from .utils import StraightThrough, create_dncoder
 from sklearn.metrics import roc_auc_score,accuracy_score,mean_squared_error, f1_score

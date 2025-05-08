@@ -1,4 +1,3 @@
-import dgl
 import torch
 import numpy as np
 from torch.utils import data
@@ -37,50 +36,6 @@ class TrainDataset(Dataset, data.dataset.Dataset):
 
     def __len__(self):
         return len(self.raw_data)
-
-    def build_graph4se(self, from_s: bool):
-        stu_num = self.n_students
-        exer_num = self.n_questions
-        node = stu_num + exer_num
-        g = dgl.DGLGraph()
-        g.add_nodes(node)
-        edge_list = []
-        cnt = {}
-        for stu in range(self.num_students):
-            cnt[stu] = 0
-        
-        for _, (stu_id, exer_id, label) in enumerate(self._raw_data):
-            if cnt[stu] > 30:
-                continue
-            cnt[stu] += 1
-            if from_s:
-                edge_list.append((int(stu_id + exer_num - 1), int(exer_id)))
-            else:
-                edge_list.append((int(exer_id), int(stu_id + exer_num - 1)))
-            
-        src, dst = tuple(zip(*edge_list))
-        g.add_edges(src, dst)
-        return g
-    
-    def build_graph4ke(self, from_e: bool):
-        know_num = self.n_concepts
-        exer_num = self.n_questions
-        node = exer_num + know_num
-        g = dgl.DGLGraph()
-        g.add_nodes(node)
-        edge_list = []
-        if from_e:
-            for exer_id in self._concept_map:
-                for know_id in self._concept_map[exer_id]:
-                    edge_list.append((int(exer_id), int(know_id + exer_num - 1)))
-        else:
-            for exer_id in self._concept_map:
-                for know_id in self._concept_map[exer_id]:
-                    edge_list.append((int(know_id + exer_num - 1), int(exer_id)))
-
-        src, dst = tuple(zip(*edge_list))
-        g.add_edges(src, dst)
-        return g
     
     def sp_mat_to_sp_tensor(self, sp_mat):
         coo = sp_mat.tocoo().astype(np.float64)

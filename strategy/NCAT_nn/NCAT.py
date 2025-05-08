@@ -1,7 +1,6 @@
 import math
 from collections import Counter
 from math import exp as exp
-from sklearn.metrics import roc_auc_score,accuracy_score
 from collections import namedtuple
 import torch
 import torch.nn as nn
@@ -9,12 +8,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 import copy as cp
 import numpy as np
-from scipy.optimize import minimize
-from dataset.adaptest_dataset import AdapTestDataset,Dataset
 from model.IRT import IRT,IRTModel
 from model.NCD import NCD,NCDModel
 from model.FACD import FACD,FACDModel
-import os
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 

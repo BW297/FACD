@@ -1,14 +1,8 @@
 from math import exp as exp
-from sklearn.metrics import roc_auc_score
 from dataset import AdapTestDataset
-from sklearn.metrics import accuracy_score
-from collections import namedtuple
-from scipy.optimize import minimize
 from strategy.abstract_strategy import AbstractStrategy
 from strategy.NCAT_nn.NCAT import NCATModel
 from tqdm import tqdm
-import numpy as np
-import random
 
 class NCATs(AbstractStrategy):
 

@@ -2,11 +2,8 @@ import sys
 import os
 import torch
 sys.path.append('..')
-import json
 import argparse
 import torch
-import logging
-import datetime
 import numpy as np
 import pandas as pd
 import random
@@ -18,7 +15,6 @@ from model.IRT import IRTModel
 from model.NCD import NCDModel
 from model.FACD import FACDModel
 from dataset.adaptest_dataset import AdapTestDataset
-from dataset.train_dataset import TrainDataset
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -47,7 +43,6 @@ parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--test_size', default=0.8, type=float)
 parser.add_argument('--test_length', default=15, type=int)
 parser.add_argument('--out_channels', default=32, type=int)
-parser.add_argument('--wandb', default=False, type=bool)
 
 parser = parser.parse_args()
 
@@ -136,10 +131,10 @@ if __name__ == '__main__':
     for strategy in strategies:
         avg =[]
         train_data.reset()
-        pre_train_data.reset()
+        pre_train_data.final_graph()
         train_data.graph = pre_train_data.graph
-        train_data.local_map = pre_train_data.local_map
-        config['local_map'] = train_data.local_map
+        train_data.se = pre_train_data.se
+        train_data.ek = pre_train_data.ek
         if parser.cdm == 'irt':
             model = IRTModel(**config)
         elif parser.cdm == 'ncd':
@@ -159,16 +154,6 @@ if __name__ == '__main__':
                 results = model.evaluate(train_data)
                 print(results)
             continue
-        if strategy.name == 'BOBCAT':
-            real = {}
-            real_data = train_data.data
-            for sid in real_data:
-                question_ids = list(real_data[sid].keys())
-                real[sid]={}
-                tmp={}
-                for qid in question_ids:
-                    tmp[qid]=real_data[sid][qid]
-                real[sid]=tmp
         S_sel ={}
         for sid in train_data.data.keys():
             key = sid
@@ -178,13 +163,7 @@ if __name__ == '__main__':
         for it in range(1, test_length + 1):
             # select question
             model.config['it'] = it
-            if strategy.name == 'BOBCAT':
-                selected_questions = strategy.adaptest_select(model, train_data, S_sel)
-                for sid in train_data.data.keys():
-                    tmp = {}
-                    tmp[selected_questions[sid]] = real[sid][selected_questions[sid]]
-                    S_sel[sid].append(tmp)
-            elif it == 1 and strategy.name == 'BECAT Strategy':
+            if it == 1 and strategy.name == 'BECAT Strategy':
                 for sid in train_data.data.keys():
                     untested_questions = np.array(list(train_data.untested[sid]))
                     random_index = random.randint(0, len(untested_questions)-1)
@@ -198,8 +177,7 @@ if __name__ == '__main__':
                 selected_questions = strategy.adaptest_select(model, train_data)
             for student, question in selected_questions.items():
                 train_data.apply_selection(student, question)
-            train_data.graph_update()  
-            train_data.local_map_update()     
+            train_data.graph_update()    
             
             # update models
             model.adaptest_update(train_data)

@@ -7,9 +7,7 @@ from dataset.train_dataset import TrainDataset
 from model.IRT import IRTModel
 from model.NCD import NCDModel
 from model.FACD import FACDModel
-import json
 import random
-import logging
 import numpy as np
 import pandas as pd
 
@@ -55,7 +53,7 @@ if __name__ == '__main__':
         'prednet_len1': 128,
         'prednet_len2': 64,
         'betas': (0.9, 0.999),
-        # for GrpahCD
+        # for FACD
         'decoder': parser.decoder,
         'out_channels': parser.out_channels,
         'num_layers': 2,
